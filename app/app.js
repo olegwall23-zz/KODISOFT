@@ -3,6 +3,28 @@
  * 
  * Отправлял письма на русском на нем же буду и комментировать.
  * 
+ * 
+ *  Не работает изменение поля Items у объекта
+ *
+ $scope.testRequestItem = function(itemToEdit){
+ 	$http.post('http://dev.kocloud.net/api/FSItem',
+ 	{
+ 	     Id:itemToEdit, Items : [
+    		{Id:0, UID:"fileItem1", Item : 
+	        {Id:0, Template:{Id : 1}, Name:"Nested file", UID: "file1" }}]
+ 		
+ 	}
+	     ).success(function(data, status, headers, config) {
+                window.location.replace("http://dev.kocloud.net/TestTask/olegwall23_gmail_com/");
+            }).error(function(data, status, headers, config) {
+                console.log('Error: user login');
+            });
+ }
+ 
+ POST http://dev.kocloud.net/api/FSItem 400 (Bad Request)
+"Message": "New form can`t have original value",
+"Source": "KoCloud.Server.Model",
+ * 
  */
 
 var app = angular.module('app', []);
