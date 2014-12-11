@@ -15,9 +15,7 @@
  		
  	}
 	     ).success(function(data, status, headers, config) {
-                window.location.replace("http://dev.kocloud.net/TestTask/olegwall23_gmail_com/");
             }).error(function(data, status, headers, config) {
-                console.log('Error: user login');
             });
  }
  
