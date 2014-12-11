@@ -8,7 +8,7 @@
 var app = angular.module('app', []);
 /*
 Конечно можно было бы создать для каждой системы
-отдельный контроллер но я решил сделать все в одном
+отдельный контроллер но я решил сделать все в одном 
 */
 app.controller("koCloudController", function($scope, $http){
     $scope.FSItemUploadDone = false;
