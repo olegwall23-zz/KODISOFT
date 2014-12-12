@@ -22,7 +22,114 @@
  POST http://dev.kocloud.net/api/FSItem 400 (Bad Request)
 "Message": "New form can`t have original value",
 "Source": "KoCloud.Server.Model",
- * 
+
+ Если бы оно работало, то благодаря двум функциям ниже можно было бы добавить объект файла или папки в поле объекта
+ с которыми вы сейчас работаете по иерархии.
+ 
+ $scope.addFileToItems = function(ItemId, ItemName){
+        $('#chooseFile').click();
+        document.getElementById('chooseFile').addEventListener('change', function(e) {
+            var files = e.target.files;
+            var countFile = 0;
+            var id = 0;
+            var request = new XMLHttpRequest();
+            request.open("POST", "http://dev.kocloud.net/api/FSItem");
+            for (var i = 0, f; f = files[i]; i++) {
+                var musicTypes = ['audio/basic','audio/L24','audio/mp4','audio/mpeg',
+                    'audio/vnd.rn-realaudio','audio/ogg','audio/vorbis','audio/x-ms-wma','audio/x-ms-wax',
+                    'audio/vnd.wave','audio/webm'];
+                var imageTypes = ['image/gif','image/jpeg','image/pjpeg','image/png','image/svg+xml',
+                    'image/tiff','image/vnd.microsoft.icon','image/vnd.wap.wbmp'];
+                var videoTypes = ['video/mpeg','video/mp4','video/ogg','video/quicktime','video/webm','video/x-ms-wmv','video/x-flv'];
+
+                function checkMIME(fT){
+                    for(var i = 0; i < musicTypes.length; i++){
+                        if(fT == musicTypes[i]){	return 3;	}
+                    }
+                    for(var i = 0; i < imageTypes.length; i++){
+                        if(fT == imageTypes[i]){ return 2;	}
+                    }
+                    for(var i = 0; i < videoTypes.length; i++){
+                        if(fT == videoTypes[i]){ return 4;}
+                    }
+                    return 1;
+                }
+                var MIMEType = checkMIME();
+                var formData = new FormData(e.target.files[i].type);
+                var idToUpload = $scope.getIdToUpload();
+                formData.append(e.target.files[i].name, e.target.files[i]);
+                if(idToUpload == "KoCloud"){
+                    formData.append('save', {Id:0, Name: e.target.files[i].name, FileType: MIMEType, Template:{Id:1}, File:{Id:-1}, UID:1});    
+                } else {
+                    formData.append('save',
+                        {Id:idToUpload, Items : [
+                            {Id:0, Item : {Id:0, Name: e.target.files[i].name, FileType: MIMEType, Template:{Id:1}, File:{Id:-1}, UID:1}}
+                        ]
+                        }
+                    );    
+                }                             
+                request.send(formData);
+            }
+        }, false);
+    }
+    
+    $scope.addFolderToItem = function(FileName){
+        var idToUpload = $scope.getIdToUpload();
+        if(idToUpload == "KoCloud"){
+            $http.post("http://dev.kocloud.net/api/FSItem",{Id:0, Name:FileName, FileType:0})
+                .success(function(data, status, headers, config) {
+                    $scope.updateDataAndSelectedItems();
+                    console.log('New folder created');
+                }).error(function(data, status, headers, config) {
+                    console.log('Error: create new folder ');
+                });        
+        } else {
+            $http.post("http://dev.kocloud.net/api/FSItem",
+                {Id:idToUpload, Items : [
+                    {Id:0, Item : {Id:0, Name:FileName, FileType:0}}
+                ]
+                }                
+               ).success(function(data, status, headers, config) {
+                    $scope.updateDataAndSelectedItems();
+                    console.log('New folder created');
+                }).error(function(data, status, headers, config) {
+                    console.log('Error: create new folder ');
+                });
+        }
+    }
+ 	
+    $scope.getIdToUpload = function(){
+        if($scope.itemIdToWorkWith == "KoCloud"){
+            return "KoCloud";
+        } else {
+            var url = "http://dev.kocloud.net/api/FSItem";
+            $http.get(url)
+                .success(function (data, status, headers, config) {
+                    search(data);
+                }).error(function (data, status, headers, config) {
+                    console.log('Error fined files in object');
+                });
+
+            function search(object) {
+                for (var i = 0; i < object.length; i++) {
+                    if (Object(object[i].Items).length > 0 && object[i].FileType == 0) {
+                        searchForFile(object[i], object[i].Id);
+                    }
+                }
+
+                function searchForFile(object, idBefore) {
+                    for (var i = 0; i < Object(object.Items).length; i++) {
+                        if (Object(object.Items[i].Item.Items).length > 0 && object.Items[i].Item.FileType == 0) {
+                            searchForFile(object.Items[i].Item, object.Id);
+                        } else if (Object(object.Items[i].Item.Id) == $scope.itemIdToWorkWith) {
+                            return idBefore;
+                        }
+                    }
+                }
+            }
+        }
+    }
+  
  */
 
 var app = angular.module('app', []);
