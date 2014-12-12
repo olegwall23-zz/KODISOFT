@@ -26,10 +26,7 @@
  */
 
 var app = angular.module('app', []);
-/*
-Конечно можно было бы создать для каждой системы
-отдельный контроллер но я решил сделать все в одном 
-*/
+
 app.controller("koCloudController", function($scope, $http){
     $scope.FSItemUploadDone = false;
     $scope.data = []; // Масив обьектов.  
@@ -102,7 +99,7 @@ app.controller("koCloudController", function($scope, $http){
             });
     };
 
-    //	При загрузке страницы загружаю все айтемы в $scope.data
+     //	При загрузке страницы загружаю все айтемы в $scope.data
     $scope.request = function(){
         $scope.FSItemUploadDone = false;
         $http.get("http://dev.kocloud.net/api/")
@@ -132,8 +129,7 @@ app.controller("koCloudController", function($scope, $http){
         }
         return 'unknown';
     }
-
-//  Функция для получения обектов
+//  Функция для получения обектов 
     $scope.queryingData = function(type, id, specific, options){
         $scope.FSItemUploadDone = false;
         var url = 'http://dev.kocloud.net/api';
@@ -154,7 +150,7 @@ app.controller("koCloudController", function($scope, $http){
             .success(function(data, status, headers, config) {
                 $scope.data = data;
                 $scope.FSItemUploadDone = true;
-          //      console.log('queryItems: '+JSON.stringify(data, null, 4));
+                console.log('queryItems: '+JSON.stringify(data, null, 4));
             }).error(function(data, status, headers, config) {
                 $scope.FSItemUploadDone = true;
                 console.log('error');
@@ -174,7 +170,6 @@ app.controller("koCloudController", function($scope, $http){
     $scope.clickCheck = function(fileName){
         $scope.check = fileName;
     };
-    // Создание новой папки
     $scope.folderDescription = "";
     $scope.addFolderDescription = true;
     $scope.createNewFolderName = function(){
@@ -217,7 +212,7 @@ app.controller("koCloudController", function($scope, $http){
         }
     };
 
-    // Отображение выбранных объектов
+   // Отображение выбранных объектов
     $scope.selectedItemsArray = [];
     $scope.isNewItemToAdd = false;
     $scope.selectAllCheck = false;
@@ -304,7 +299,7 @@ app.controller("koCloudController", function($scope, $http){
         }
         return true;
     }
-    // Удаление объекта
+   // Удаление объекта
     $scope.deleteFileInfo = function(){
         $('#deleteFileModal').modal('show');
     };
@@ -345,7 +340,6 @@ app.controller("koCloudController", function($scope, $http){
         $scope.selectedItemsArray = [];
     };
 
-//  Сделал функцию на перед
     $scope.removeShareId = function(idToRemove){
         $scope.shareIdArray.splice(getIndexOfObjectsArray($scope.shareIdArray, idToRemove), 1);
     };
@@ -364,7 +358,6 @@ app.controller("koCloudController", function($scope, $http){
             $scope.shareIdTyped = undefined;
         }
     }
-
 //  Добавление и чтение записей в объекте
     $scope.noteDataToAdd = "";
     $scope.addNoteToItem = function(){
@@ -393,7 +386,6 @@ app.controller("koCloudController", function($scope, $http){
                 console.log('Error: update data');
             });
     };
-
 //  Функция для хождения по иерархии объекта но только если этот обект папка
     $scope.currentPosition = [{Name:"KoCloud", Id:'KoCloud'}];
     $scope.itemToWorkWith = undefined;
@@ -413,7 +405,7 @@ app.controller("koCloudController", function($scope, $http){
         } else if(itemObject.FileType == 0) {
             $scope.itemToWorkWith = $scope.data[getIndexOfObjectsArray($scope.data, itemObject.Id)];
             var tmp = [];
-            for(var i = 0; i < $scope.itemToWorkWith.Items.length; i++){
+            for(var i = 0; i < Object($scope.itemToWorkWith.Items).length; i++){
                 tmp.push($scope.itemToWorkWith.Items[i].Item);
             }
          //   console.log('queryItems: '+JSON.stringify(tmp, null, 4));
@@ -424,10 +416,10 @@ app.controller("koCloudController", function($scope, $http){
     };
 
     $scope.choosePosition = function(positionName, positionId){
-        for(var i = 0; i < $scope.currentPosition.length; i++){
+        for(var i = 0; i < Object($scope.currentPosition).length; i++){
             if(positionId == $scope.currentPosition[i].Id){
                 $scope.currentPosition = $scope.currentPosition.slice(0, ++i);
-                if($scope.currentPosition.length == 1){
+                if(Object($scope.currentPosition).length == 1){
                     $scope.queryingData("FSItem", null, null, null);
                 } else {
 
@@ -435,13 +427,13 @@ app.controller("koCloudController", function($scope, $http){
                         if (object.Id == $scope.currentPosition[i].Id) {
                             $scope.data = object;
                         } else {
-                            if (object.Items.length > 0 && object.FileType == 0) {
+                            if (Object(object.Items).length > 0 && object.FileType == 0) {
                                 searchForId($scope.itemToWorkWith);
                             }
                         }
 
                         function searchForId(object) {
-                            for (var i = 0; i < object.Items.length; i++) {
+                            for (var i = 0; i < Object(object.Items).length; i++) {
                                 if (object.Items[i].Item.Id != $scope.currentPosition[i].Id) {
                                     searchForId(object.Items[i].Item);
                                 } else {
@@ -457,7 +449,6 @@ app.controller("koCloudController", function($scope, $http){
             }
         }
     };
-
 //  Поиск типа объекта в иерархии объекта(ов)
     $scope.finedFileTypeInObject = function(parameter, fileTypeToSearch){
         $scope.selectedItemsArray = [];
@@ -471,23 +462,23 @@ app.controller("koCloudController", function($scope, $http){
 
         $http.get(url)
             .success(function(data, status, headers, config) {
-                search(data);
+               search(data);							
             }).error(function(data, status, headers, config) {
                 console.log('Error fined files in object');
             });
 
         function search(object){
-            for (var i = 0; i < object.length; i++) {
-                if (object[i].Items.length > 0 && object[i].FileType == 0) {
-                    searchForFile(object[i]);
-                } else if (object[i].FileType == fileTypeToSearch && object[i].Items.length == 0) {
-                    resultOfSearch.push(object[i]);
-                }
-            }
+          for (var i = 0; i < (object).length; i++) {					
+                if (object[i].FileType == fileTypeToSearch && Object(object[i].Items).length == 0) {
+                 resultOfSearch.push(object[i]);
+               } else if (Object(object[i].Items).length > 0 && object[i].FileType == 0) {
+                   searchForFile(object[i]);
+               }
+           }
 
             function searchForFile(object) {
                 for (var i = 0; i < object.Items.length; i++) {
-                    if (object.Items[i].Item.Items.length > 0 && object.Items[i].Item.FileType == 0) {
+                    if (Object(object.Items[i].Item.Items).length > 0 && object.Items[i].Item.FileType == 0) {
                         searchForFile(object.Items[i].Item);
                     } else {
                         if (object.Items[i].Item.FileType == fileTypeToSearch) {
@@ -503,8 +494,8 @@ app.controller("koCloudController", function($scope, $http){
 //  Поиск имени объекта в иерархии объекта(ов)
     $scope.finedFileNameInObject = function(parameter, fileNameToSearch){
         $scope.selectedItemsArray = [];
-        if(fileNameToSearch.length > 0) {
-            var resultOfSearch = [];
+				 var resultOfSearch = [];
+        if(fileNameToSearch.length > 0) {           
             var url = "http://dev.kocloud.net/api/";
             if (parameter == "all") {
                 url += "FSItem";
@@ -519,23 +510,25 @@ app.controller("koCloudController", function($scope, $http){
                     console.log('Error fined files in object');
                 });
 
-            function search(object) {
-                for (var i = 0; i < object.length; i++) {
-                    if (object[i].Items.length > 0 && object[i].FileType == 0) {
+            function search(object) {						
+                for (var i = 0; i < object.length; i++) { 
+								  if (object[i].hasOwnProperty('Name')) {
+                    if (Object(object[i].Items).length > 0 && object[i].FileType == 0) {
                         searchForFile(object[i]);
-                    } else if (object[i].Name.indexOf(fileNameToSearch) != -1 && object[i].Items.length == 0) {
+                    } else if (Object(object[i].Name).indexOf(fileNameToSearch) != -1) {
                         resultOfSearch.push(object[i]);
                     }
+										}
                 }
 
                 function searchForFile(object) {
                     for (var i = 0; i < object.Items.length; i++) {
                         if (object.Items[i].Item.hasOwnProperty('Name')) {
-                            if (object.Items[i].Item.Items.length > 0 && object.Items[i].Item.FileType == 0) {
+                            if (Object(object.Items[i].Item.Items).length > 0 && object.Items[i].Item.FileType == 0) {
                                 searchForFile(object.Items[i].Item);
-                            } else if (object.Items[i].Item.Name.indexOf(fileNameToSearch) != -1) {
+                            } else if (Object(object.Items[i].Item.Name).indexOf(fileNameToSearch) != -1) {
                                 resultOfSearch.push(object.Items[i].Item);
-                            }
+                           }
                         }
                     }
                 }
@@ -548,16 +541,16 @@ app.controller("koCloudController", function($scope, $http){
     $scope.downloadSelectedFiles = function(){
         var filesToDownload = [];
         for (var i = 0; i < $scope.selectedItemsArray.length; i++) {
-            if ($scope.selectedItemsArray[i].Items.length > 0 && $scope.selectedItemsArray[i].FileType == 0) {
+            if (Object($scope.selectedItemsArray[i].Items).length > 0 && $scope.selectedItemsArray[i].FileType == 0) {
                 searchForFile($scope.data[i]);
-            } else if ($scope.selectedItemsArray[i].hasOwnProperty('File')  && $scope.selectedItemsArray[i].Items.length == 0) {
+            } else if ($scope.selectedItemsArray[i].hasOwnProperty('File')  && Object($scope.selectedItemsArray[i].Items).length == 0) {
                 filesToDownload.push($scope.selectedItemsArray[i]);
             }
         }
 
         function searchForFile(object) {
             for (var i = 0; i < object.Items.length; i++) {
-                if (object.Items[i].Item.Items.length > 0 && object.Items[i].Item.FileType == 0) {
+                if (Object(object.Items[i].Item.Items).length > 0 && object.Items[i].Item.FileType == 0) {
                     searchForFile(object.Items[i].Item);
                 } else if(object.Items[i].Item.hasOwnProperty('File')) {
                     filesToDownload.push(object.Items[i].Item);
@@ -587,10 +580,9 @@ app.controller("koCloudController", function($scope, $http){
         }
         download(filesToDownload);
     }
-
-// Функция сокета для подписки на изминения всех или только выбраных обектов.
+// Подписки на изминения всех или только выбраных обектов.
     $scope.connection = $.hubConnection();
-    $scope.FormTrackerProxy = $scope.connection.FormTrackerProxy('FormTracker');
+    $scope.contosoChatHubProxy = $scope.connection.createHubProxy('FormTracker');
 
     $scope.itemEditFormIds = [];
 
@@ -609,7 +601,7 @@ app.controller("koCloudController", function($scope, $http){
 
         function search(object) {
             for (var i = 0; i < object.length; i++) {
-                if (object[i].Items.length > 0) {
+                if (Object(object[i].Items).length > 0) {
                     searchForFile(object[i]);
                 } else {
                     allItemIds.push(object[i].Id);
@@ -618,21 +610,21 @@ app.controller("koCloudController", function($scope, $http){
 
             function searchForFile(object) {
                 for (var i = 0; i < object.Items.length; i++) {
-                    if (object.Items[i].Item.Items.length > 0) {
+                    if (Object(object.Items[i].Item.Items).length > 0) {
                         searchForFile(object.Items[i].Item);
                     } else {
                         allItemIds.push(object.Items[i].Id);
                     }
                 }
             }
-           $scope.FormTrackerProxy.on('OnUpdated', function(FormId) {
+            $scope.contosoChatHubProxy.on('OnUpdated', function(FormId) {
                 console.log(FormId+ "   " +  $scope.itemEditFormIds.length);
                 $scope.itemEditFormIds.push(FormId);
                 document.getElementById("webSocketMessages").innerHTML = (String)($scope.itemEditFormIds.length);
             });
             $scope.connection .start().done(function() {
                 console.log('done');
-        	 $scope.FormTrackerProxy.invoke('TrackForms', allItemIds);
+                $scope.contosoChatHubProxy.invoke('TrackForms', allItemIds);
                 $scope.wsInvokerCheck = true;
             });
         }
@@ -641,7 +633,7 @@ app.controller("koCloudController", function($scope, $http){
     $scope.offWsInvoker = function(){
         $scope.connection.stop();
         $scope.connection = $.hubConnection();
-        $scope.FormTrackerProxy = $scope.connection.createHubProxy('FormTracker');
+        $scope.contosoChatHubProxy = $scope.connection.createHubProxy('FormTracker');
         $scope.itemEditFormIds = [];
         document.getElementById("webSocketMessages").innerHTML = (String)($scope.itemEditFormIds.length);
         $scope.wsInvokerCheck = false;
@@ -661,7 +653,7 @@ app.controller("koCloudController", function($scope, $http){
 
             $scope.connection .start().done(function() {
                 console.log('done');
-                $scope.FormTrackerProxy.invoke('TrackForms', $scope.invokeIdsArray);
+                $scope.contosoChatHubProxy.invoke('TrackForms', $scope.invokeIdsArray);
                 $scope.wsInvokerCheck = true;
             });
 
