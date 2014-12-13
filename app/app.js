@@ -99,35 +99,7 @@
     }
  	
     $scope.getIdToUpload = function(){
-        if($scope.itemIdToWorkWith == "KoCloud"){
-            return "KoCloud";
-        } else {
-            var url = "http://dev.kocloud.net/api/FSItem";
-            $http.get(url)
-                .success(function (data, status, headers, config) {
-                    search(data);
-                }).error(function (data, status, headers, config) {
-                    console.log('Error fined files in object');
-                });
-
-            function search(object) {
-                for (var i = 0; i < object.length; i++) {
-                    if (Object(object[i].Items).length > 0 && object[i].FileType == 0) {
-                        searchForFile(object[i], object[i].Id);
-                    }
-                }
-
-                function searchForFile(object, idBefore) {
-                    for (var i = 0; i < Object(object.Items).length; i++) {
-                        if (Object(object.Items[i].Item.Items).length > 0 && object.Items[i].Item.FileType == 0) {
-                            searchForFile(object.Items[i].Item, object.Id);
-                        } else if (Object(object.Items[i].Item.Id) == $scope.itemIdToWorkWith) {
-                            return idBefore;
-                        }
-                    }
-                }
-            }
-        }
+        return $scope.currentPosition[$scope.currentPosition.length - 1].Id;
     }
   
  */
