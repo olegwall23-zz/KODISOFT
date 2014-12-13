@@ -1,9 +1,6 @@
 /**
  * Created by Sohan on 22.11.2014.
  * 
- * Отправлял письма на русском на нем же буду и комментировать.
- * 
- * 
  *  Не работает изменение поля Items у объекта
  *
  $scope.testRequestItem = function(itemToEdit){
