@@ -55,7 +55,7 @@
                     return 1;
                 }
                 var MIMEType = checkMIME();
-                var formData = new FormData(e.target.files[i].type);
+                var formData = new FormData();
                 var idToUpload = $scope.getIdToUpload();
                 formData.append(e.target.files[i].name, e.target.files[i]);
                 if(idToUpload == "KoCloud"){
