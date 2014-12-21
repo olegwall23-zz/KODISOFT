@@ -39,11 +39,13 @@
     </div>
     <a class="navbar-brand" href="http://dev.kocloud.net/TestTask/olegwall23_gmail_com/"><b>KoCloud</b></a>
     <div class="navbar-form" style="margin-left: 18%">
-      <input class="btn btn-primary" ng-click="renameFile()" ng-show="checkIfFilesSelected()==1" type="button" value="rename">
+      <input class="btn btn-primary" ng-click="showModalWithFileNameToRename()" ng-show="checkIfFilesSelected()==1" type="button" value="rename">
+      <input class="btn btn-primary" onclick="$('#ShareItemModal').modal('show');" ng-show="checkIfFilesSelected()>=1" type="button" value="share">
       <input class="btn btn-primary" ng-click="downloadSelectedFiles()" ng-show="checkIfFilesSelected()>=1" type="button" value="download">
       <input class="btn btn-primary" ng-click="deleteFileInfo()" ng-show="checkIfFilesSelected()>=1" type="button" value="delete">
       <input class="btn btn-primary" onclick="$('#SelectedFilesInfoModal').modal('show');" ng-show="checkIfFilesSelected()==1" type="button" value="info">
       <input class="btn btn-primary" onclick="$('#ShowFileNotesModal').modal('show');" ng-show="checkIfFilesSelected()==1" type="button" value="notes">
+      <input class="btn btn-primary" onclick="$('#ShowFileDescriptionModal').modal('show');" ng-show="checkIfFilesSelected()==1" type="button" value="description">
       <div class="pull-right">
         <button ng-click="changeAuthorizationStatus()" class="btn btn-primary">{{ authorizationButtonValue }}</button>
       </div>
@@ -59,59 +61,44 @@
           <input id="chooseFile" style="visibility: hidden" type="file" id="files" name="files[]" multiple />
           <input onclick="$('#CreateNewFolderModal').modal('show');" class="btn btn-primary" type="button" value="New folder">
           <input onclick="$('#chooseFile').click();" class="btn btn-primary" type="button" class="form-control" value="Upload">
-          <script>
-            document.getElementById('chooseFile').addEventListener('change', function(e) {
-              var files = e.target.files;
-              var countFile = 0;
-              var id = 0;
-              var request = new XMLHttpRequest();
-              request.open("POST", "http://dev.kocloud.net/api/FSItem");
-              for (var i = 0, f; f = files[i]; i++) {
-                var formData = new FormData();
-                formData.append(e.target.files[i].name, e.target.files[i]);
-                formData.append('save',{Id:0, Name: e.target.files[i].name, Template:{Id:1}, File:{Id:-1}, UID:1});
-                request.send(formData);
-              }
-            }, false);
-          </script>
         </li>
         <div class="input-group navbar-form" ng-init="fileNameToSearch">
           <input  placeholder="Name of file" ng-model="fileNameToSearch"  type="text" class="form-control" style="width: 95%">
                 <span class="input-group-btn">
-                  <button ng-click="finedFileNameInObject('all', fileNameToSearch)" class="btn btn-default" type="button">Search</button>
+                  <button ng-click="finedFileNameInObject(fileNameToSearch);selectTab(9)" class="btn btn-default" type="button">Search</button>
                 </span>
         </div><!-- /input-group -->
         </li><!-- /.col-lg-6 -->
 
         <li ng-class="{ active:isSelected(8) }">
-          <a href ng-click="selectTab(8);queryingData('FSItem',null,null,null)">All</a>
+          <a href ng-click="selectTab(8);queryHighLevelOfHierarchy()">All</a>
         </li>
         <li ng-class="{ active:isSelected(1) }">
-          <a href ng-click="selectTab(1);finedFileTypeInObject('all',1)">Files</a>
+          <a href ng-click="selectTab(1);selectObjectsBySpecificField('FileType',1)">Files</a>
         </li>
         <li ng-class="{ active:isSelected(2) }">
-          <a href ng-click="selectTab(2);finedFileTypeInObject('all',2)">Image</a>
+          <a href ng-click="selectTab(2);selectObjectsBySpecificField('FileType',2)">Image</a>
         </li>
         <li ng-class="{ active:isSelected(3) }">
-          <a href ng-click="selectTab(3);finedFileTypeInObject('all',3)">Music</a>
+          <a href ng-click="selectTab(3);selectObjectsBySpecificField('FileType',3)">Music</a>
         </li>
         <li ng-class="{ active:isSelected(4) }">
-          <a href ng-click="selectTab(4);finedFileTypeInObject('all',4)">Video</a>
+          <a href ng-click="selectTab(4);selectObjectsBySpecificField('FileType',4)">Video</a>
         </li>
         <li ng-class="{ active:isSelected(5) }">
-          <a href ng-click="selectTab(5);finedFileTypeInObject('all',5)">Document</a>
+          <a href ng-click="selectTab(5);selectObjectsBySpecificField('FileType',5)">Document</a>
         </li>
       </ul>
       <hr>
       <ul class="nav nav-sidebar navbar-form" role="tablist">
         <li><input class="btn btn-primary" value="WebSocket invoker" type="button" onclick="$('#InvokerModal').modal('show');"></li>
-        <li ng-show="wsInvokeMessagesShow()" role="presentation"><a href="#" onclick="$('#InvokerMessagesListModal').modal('show');">Messages <span id="webSocketMessages" class="badge"></span></a></li>
-        <li><input class="btn btn-danger" ng-show="wsInvokeMessagesShow()" type="button" value="Stop invoker" ng-click="offWsInvoker()"></li>
+        <li ng-show="wsInvokerCheck" role="presentation"><a href="#" onclick="$('#InvokerMessagesListModal').modal('show');">Messages <span id="webSocketMessages" class="badge"></span></a></li>
+        <li><input class="btn btn-danger" ng-show="wsInvokerCheck" type="button" value="Stop invoker" ng-click="offWsInvoker()"></li>
       </ul>
     </div>
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
       <div class="table-responsive">
-        <table class="table table-hover" ng-init="queryingData('FSItem', null, null, null)">
+        <table class="table table-hover" ng-init="queryHighLevelOfHierarchy()">
           <thead>
           <tr>
             <th><input  ng-click="selectAllItems()" ng-checked="selectAllItemsModel()" type="checkbox" style="margin-right: 10px"><a href>{{ file.Name }}</a>Name</th>
@@ -144,7 +131,7 @@
               </div>
               <div class="modal-body">
                 <b>New name:</b>
-                <input id="renameField" type="text" ng-model="newFileName" class="form-control" autofocus type="text">
+                <input id="renameField" type="text" ng-model="newfileName" class="form-control" autofocus type="text">
               </div>
               <div class="modal-footer">
                 <button ng-click="saveNewFileName()" type="button" data-dismiss="modal" class="btn btn-primary pull-left">Rename</button>
@@ -176,20 +163,20 @@
         <!-- CreateNewFolderModal -->
         <div class="modal fade" id="CreateNewFolderModal" role="dialog" aria-labelledby="CreateNewFolderModalLabel" aria-hidden="true" data-backdrop="static">
           <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content" ng-init="folDesc='';adFolDesc=true;folderName=''">
               <div class="modal-header">
-                <button ng-click="resetNewFolderName()" type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button ng-click="adFolDesc=true;folDesc='';folderName=''" type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
                 <h4 class="modal-title" id="CreateNewFolderModalLabel">New folder</h4>
               </div>
               <div class="modal-body">
-                <b>Folder name:</b> <input class="form-control" type="text" autofocus ng-model="newFolderName"><br>
-                <input class="btn btn-primary" type="button" value="Add description" ng-click="addFolderDescription = false" ng-show="addFolderDescription">
-                <b ng-hide="addFolderDescription">Description:</b><br>
-                <textarea class="form-control" ng-hide="addFolderDescription" ng-data="description"></textarea>
+                <b>Folder name:</b> <input class="form-control" type="text" autofocus ng-model="folderName"><br>
+                <input class="btn btn-primary" type="button" value="Add description" ng-click="adFolDesc=false" ng-show="adFolDesc">
+                <b ng-hide="adFolDesc">Description:</b><br>
+                <textarea class="form-control" ng-hide="adFolDesc" ng-data="description"></textarea>
               </div>
               <div class="modal-footer">
-                <button ng-click="createNewFolderName()" type="button" class="btn btn-primary pull-left">Create</button>
-                <button ng-click="resetNewFolderName()" type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                <button ng-click="createNewFolderName(folderName,folDesc);adFolDesc=true;folDesc='';folderName=''" type="button" data-dismiss="modal" class="btn btn-primary pull-left">Create</button>
+                <button ng-click="adFolDesc=true;folDesc='';folderName=''" type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
               </div>
             </div>
           </div>
@@ -204,13 +191,17 @@
                 <h4 class="modal-title" id="ShareItemModalLabel">Share</h4>
               </div>
               <div class="modal-body">
-                <b>Share:</b> <input type="text" ng-keypress="kyeHandler($event)" ng-model="shareIdTyped" class="form-control">
+                <input class="form-control" ng-model="shareType" width="40px" type="text" placeholder="Type"><br>
+                <input class="form-control" ng-model="shareStatus" width="40px" type="text" placeholder="Status"><br>
+                <input class="form-control" ng-model="shareModeration" width="40px" type="text" placeholder="Moderation"><br>
+                <input type="text" ng-keypress="kyeHandler($event)" ng-model="shareId" class="form-control" placeholder="Id"><br>
+                <p ng-show="shareIdArray.length==0"><b>Click ENTER to add id</b></p>
               </div>
               <div class="navbar-form" ng-repeat="share in shareIdArray">
-                <button ng-click="removeShareId(share.Id)" class="btn btn-danger">{{ share.Id }}</button>
+                <button ng-click="removeShareId(share.Id)" class="btn btn-danger">{{ share.Id }} &nbsp;&#10006;</button>
               </div>
               <div class="modal-footer">
-                <button ng-click="sharetr()" type="button" class="btn btn-primary pull-left">Share</button>
+                <button ng-click="shareItems()" data-dismiss="modal" type="button" class="btn btn-primary pull-left">Share</button>
                 <button ng-click="releaseShareIdArray()" type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
               </div>
             </div>
@@ -269,17 +260,18 @@
               <div class="modal-body">
                 <!--obj.hasOwnProperty-->
                 <p ng-show="selectedItemsArray[0].hasOwnProperty('Name')"><b>Name:</b> {{ selectedItemsArray[0].Name }}</p>
-                <p ng-show="selectedItemsArray[0].hasOwnProperty('Description')"><b>Description:</b> {{ selectedItemsArray[0].Description }}<hr></p>
+                <p ng-show="selectedItemsArray[0].hasOwnProperty('Description')&&selectedItemsArray[0].Description.length>0"><b>Description:</b> {{ selectedItemsArray[0].Description }}<hr></p>
 
-                <p ng-show="selectedItemsArray[0].hasOwnProperty('CreatedDate')"><b>Created date:</b> {{ selectedItemsArray[0].CreatedDate }}</p>
                 <p ng-show="selectedItemsArray[0].hasOwnProperty('CreatedBy')"><b>Created by:</b> {{ selectedItemsArray[0].CreatedBy }}</p>
+                <p ng-show="selectedItemsArray[0].hasOwnProperty('CreatedDate')"><b>Created date:</b> {{ selectedItemsArray[0].CreatedDate }}</p>
                 <p ng-show="selectedItemsArray[0].hasOwnProperty('LastModifyBy')"><b>LastModify by:</b> {{ selectedItemsArray[0].LastModifyBy }}</p>
-                <p ng-show="selectedItemsArray[0].hasOwnProperty('LastModifyDate')"><b>LastModify date:</b> {{ getFileTypeName(selectedItemsArray[0].LastModifyDate) }}<hr></p>
+                <p ng-show="selectedItemsArray[0].hasOwnProperty('LastModifyDate')"><b>LastModify date:</b> {{ selectedItemsArray[0].LastModifyDate }}<hr></p>
 
                 <p ng-show="selectedItemsArray[0].hasOwnProperty('FileType')"><b>Type:</b> {{ getFileTypeName(selectedItemsArray[0].FileType) }}</p>
-                <p ng-show="selectedItemsArray[0].hasOwnProperty('File')"><b>Size:</b> {{ selectedItemsArray[0].File.Length }} bytes<hr></p>
+                <p ng-show="selectedItemsArray[0].hasOwnProperty('File')"><b>Size:</b> {{ selectedItemsArray[0].File.Length }} bytes</p>
+                <p ng-show="selectedItemsArray[0].hasOwnProperty('File')&&selectedItemsArray[0]['File'].hasOwnProperty('MIME')"><b>MIME:</b> {{ selectedItemsArray[0].File.MIME }} bytes</p><hr>
 
-                <p ng-show="selectedItemsArray[0].Accesses.length > 0"><b>Accesses:</b> {{ selectedItemsArray[0].LastModifyBy }}</p>
+                <p ng-show="selectedItemsArray[0].Accesses.length > 0"><b>LastModifyBy:</b> {{ selectedItemsArray[0].LastModifyBy }}</p>
               </div>
             </div>
           </div>
@@ -293,40 +285,9 @@
                 <h4 class="modal-title" id="ShowFileNotesModalLabel">Notes</h4>
               </div>
               <div class="modal-body">
-                <!--obj.hasOwnProperty-->
                 <div ng-show="selectedItemsArray[0].Notes.length>0">
                   <table class="table table-hover">
                     <tr ng-repeat="note in selectedItemsArray[0].Notes">
-                      <td>
-                        {{ note.Item }}
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-                <div ng-hide="selectedItemsArray[0].Notes.length>0" class="alert alert-info" role="alert">No notes.</div>
-
-                <div>
-                  <textarea ng-model="noteDataToAdd" class="form-control"></textarea><br>
-                  <input class="btn btn-primary" ng-click="addNoteToItem()" type="button" value="Add note">
-                  <input class="btn btn-danger pull-right" data-dismiss="modal" ng-click="noteDataToAdd = ''" type="button" value="Close">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal fade" id="TestModal" role="dialog" aria-labelledby="TE" aria-hidden="true" data-backdrop="static">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button  ng-click="noteDataToAdd = ''" type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="TE">Notes</h4>
-              </div>
-              <div class="modal-body">
-                <!--obj.hasOwnProperty-->
-                <div ng-show="selectedItemsArray[0].Notes.length>0">
-                  <table class="table table-hover">
-                    <tr ng-repeat="note in ">
                       <td>
                         {{ note.Item }}
                       </td>
@@ -354,7 +315,8 @@
                 <h4 class="modal-title" id="InvokerModalLabel">Invoker</h4>
               </div>
               <div class="modal-body">
-                <b>Id:</b> <input type="text" ng-keypress="InvokeKyeHandler($event)" ng-model="invokeId" class="form-control">
+                <b>Id:</b> <input type="text" ng-keypress="InvokeKyeHandler($event)" ng-model="invokeId" class="form-control"><br>
+                <p ng-show="invokeIdsArray.length == 0"><b>Click ENTER to add id</b></p>
               </div>
               <div class="navbar-form" ng-repeat="Id in invokeIdsArray">
                 <button ng-click="removeInvokeId(Id)" class="btn btn-danger">{{ Id }}</button>
@@ -381,19 +343,45 @@
                   <table class="table table-hover">
                     <tr ng-repeat="id in itemEditFormIds">
                       <td>
-                       Item with id {{ id }} was edit
+                        Item with id {{ id }} was edit
                       </td>
                     </tr>
                   </table>
                 </div>
                 <div ng-hide="itemEditFormIds.length>0" class="alert alert-info" role="alert">No messages.</div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- FileDescription -->
+        <div class="modal fade" id="ShowFileDescriptionModal" role="dialog" aria-labelledby="ShowFileDescriptionLabel" aria-hidden="true" data-backdrop="static">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="ShowFileDescriptionLabel">Description</h4>
+              </div>
+              <div class="modal-body" ng-init="isChange=false;description=''">
+                <div ng-show="!selectedItemsArray[0].hasOwnProperty('Description')||selectedItemsArray[0].Description.length==0" class="alert alert-info" role="alert">No description.</div>
+                <div ng-show="selectedItemsArray[0].hasOwnProperty('Description')&&selectedItemsArray[0].Description.length>1">
+                  <h3>{{ selectedItemsArray[0].Description }}</h3>
+                </div>
+                <hr>
+                <button ng-hide="isChange" ng-click="isChange=true" type="button" class="btn btn-primary btn-default">Change</button><br>
+
+                <textarea ng-show="isChange" ng-model="description" class="form-control"></textarea><br>
+                <input ng-show="isChange" class="btn btn-primary" ng-click="changeDescription(description);description='';isChange=false" data-dismiss="modal" type="button" value="Save">
+                <div class="modal-footer">
+                  <button  ng-click="description='';isChange=false" type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
       </div>
     </div>
